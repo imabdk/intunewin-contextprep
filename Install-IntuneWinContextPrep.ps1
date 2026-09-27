@@ -77,10 +77,11 @@
     Both scripts must sit in the same folder. The installer copies the wrapper next to
     IntuneWinAppUtil.exe in the install folder.
 
-    Version: 1.4.1
-    Updated: 2026-09-19
+    Version: 1.5.0
+    Updated: 2026-09-27
 
     Changelog:
+    1.5.0 - 2026-09-27 - No change in this script; version kept in step with the wrapper.
     1.4.1 - 2026-09-19 - Fail up front with an explanation when Invoke-IntuneWinContextPrep.ps1 is
                          missing from the same folder. The Copy-Item error it produced previously
                          read as though this script referenced the wrong file name. Unknown

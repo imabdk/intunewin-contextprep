@@ -17,8 +17,8 @@ version, troubleshooting a failed install, packaging something for a pilot group
 ## What it adds on top of IntuneWinAppUtil.exe
 
 - **Paths resolved from what you clicked.** Right-click a setup file and its parent folder becomes
-  the source. Right-click a folder and it is used directly. If it holds several setup files you pick
-  one, and the choice is remembered per folder, so the next version is one click.
+  the source. Right-click a folder and it is used directly, and you are prompted if it holds several
+  setup files.
 - **A confirmation before anything is packaged.** Everything in the source folder goes into the
   package, so the prompt shows the file count and size, flags personal and system folders, calls out
   existing `.intunewin` files, and warns past the 30 GB limit Intune enforces.
@@ -116,7 +116,6 @@ Everything is written under `%LOCALAPPDATA%\IntuneWinContextPrep`, under both in
 | --- | --- |
 | `Output\<setup>_<timestamp>\` | The `.intunewin` package and its `.json` handoff file |
 | `Logs\` | A log per run, plus the packaging tool's own output |
-| `setup-choices.json` | Remembered setup file per source folder |
 
 ## AppLocker and App Control
 

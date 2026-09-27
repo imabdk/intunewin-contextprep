@@ -5,8 +5,8 @@
 .DESCRIPTION
     Runs IntuneWinAppUtil.exe against whatever was right-clicked. A file means its parent folder
     becomes the source folder; a folder is used directly, and the user is prompted when it holds
-    more than one setup file. The choice is remembered per folder. A confirmation shows what is
-    about to be included, because everything in the source folder ends up in the package.
+    more than one setup file. A confirmation shows what is about to be included, because everything
+    in the source folder ends up in the package.
 
     Output goes to a timestamped folder under %LOCALAPPDATA%\IntuneWinContextPrep, so a re-run never
     bundles a previous package into the next one, and the package is renamed to include the detected
@@ -34,10 +34,13 @@
     Not intended to be run directly. Install-IntuneWinContextPrep.ps1 copies this script next to
     IntuneWinAppUtil.exe and registers the shell verb that calls it.
 
-    Version: 1.4.1
-    Updated: 2026-09-19
+    Version: 1.5.0
+    Updated: 2026-09-27
 
     Changelog:
+    1.5.0 - 2026-09-27 - Removed the remembered setup file per folder. It only ever helped when a
+                         source folder held more than one setup file, at the cost of a persisted
+                         file and a concept to explain; the picker now simply shows every time.
     1.4.1 - 2026-09-19 - No change in this script; version kept in step with the installer.
     1.4.0 - 2026-09-19 - Added .ps1, .cmd and .bat as setup files, with install commands suited to
                          each.
@@ -78,7 +81,6 @@ $logDir = Join-Path $dataRoot 'Logs'
 if (-not (Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
 $timestamp = Get-Date -Format 'yyyyMMdd_HHmmss'
 $logFile = Join-Path $logDir "IntuneWinContextPrep_$timestamp.log"
-$choicesFile = Join-Path $dataRoot 'setup-choices.json'
 $setupExtensions = @('.exe', '.msi', '.msp', '.ps1', '.cmd', '.bat')
 # Intune rejects a Win32 app larger than this
 $maxAppBytes = 30GB
@@ -437,31 +439,6 @@ function Get-SourceProfile {
     }
 }
 
-function Get-RememberedSetupFile {
-    param([string]$Folder)
-
-    if (-not (Test-Path -LiteralPath $choicesFile)) { return $null }
-    try { $map = Get-Content -LiteralPath $choicesFile -Raw | ConvertFrom-Json }
-    catch { return $null }
-
-    ($map.PSObject.Properties | Where-Object { $_.Name -eq $Folder } | Select-Object -First 1).Value
-}
-
-function Set-RememberedSetupFile {
-    param([string]$Folder, [string]$FileName)
-
-    $map = @{}
-    if (Test-Path -LiteralPath $choicesFile) {
-        try {
-            (Get-Content -LiteralPath $choicesFile -Raw | ConvertFrom-Json).PSObject.Properties |
-                ForEach-Object { $map[$_.Name] = $_.Value }
-        }
-        catch { $map = @{} }
-    }
-    $map[$Folder] = $FileName
-    $map | ConvertTo-Json | Set-Content -LiteralPath $choicesFile -Encoding UTF8
-}
-
 function Select-SetupFile {
     param($Candidates)
 
@@ -531,16 +508,9 @@ try {
     $sourceFiles = @(Get-ChildItem -LiteralPath $sourceFolder -Recurse -File -ErrorAction SilentlyContinue)
     $sourceProfile = Get-SourceProfile -Folder $sourceFolder -Files $sourceFiles
 
-    $forcePrompt = $false
     while ($true) {
-        $remembered = if ($forcePrompt) { $null } else { Get-RememberedSetupFile -Folder $sourceFolder }
-        $rememberedMatch = if ($remembered) { $candidates | Where-Object { $_.Name -eq $remembered } | Select-Object -First 1 } else { $null }
-
         if ($candidates.Count -eq 1) {
             $setupFile = $candidates[0].FullName
-        }
-        elseif ($rememberedMatch) {
-            $setupFile = $rememberedMatch.FullName
         }
         else {
             $setupFile = Select-SetupFile -Candidates $candidates
@@ -548,7 +518,7 @@ try {
         }
 
         $confirmLines = @(
-            "Setup file:    $(Split-Path -Leaf $setupFile)$(if ($rememberedMatch) { '  (remembered)' })"
+            "Setup file:    $(Split-Path -Leaf $setupFile)"
             "Source folder: $sourceFolder"
             "Contents:      $($sourceProfile.FileCount) file(s), $(Format-Bytes $sourceProfile.TotalBytes)"
             ''
@@ -572,12 +542,8 @@ try {
         $answer = Show-Dialog -Text ($confirmLines -join [Environment]::NewLine) -Title 'Package as .intunewin' -Buttons $buttons -Icon $icon
 
         if ($answer -eq 'Yes') { break }
-        if ($answer -eq 'No' -and $candidates.Count -gt 1) { $forcePrompt = $true; continue }
+        if ($answer -eq 'No' -and $candidates.Count -gt 1) { continue }
         throw 'Cancelled before packaging.'
-    }
-
-    if ($candidates.Count -gt 1) {
-        Set-RememberedSetupFile -Folder $sourceFolder -FileName (Split-Path -Leaf $setupFile)
     }
 
     # the tool stages content under %TEMP%\<guid>\IntuneWinPackage\Contents, so a tree that fits on
