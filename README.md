@@ -1,5 +1,7 @@
 # IntuneWinContextPrep
 
+Write-up on the blog: [imab.dk/intunewincontextprep](https://www.imab.dk/intunewincontextprep/)
+
 Adds a **Package as .intunewin** entry to the Windows Explorer context menu. Right-click a setup
 file or a folder and get a finished `.intunewin` package, without opening a console and typing out
 `-c`, `-s` and `-o` paths for IntuneWinAppUtil.exe.
@@ -154,6 +156,6 @@ install path, tool version tag and hash pinning.
 
 **Martin Bengtsson**
 
-- Blog: [www.imab.dk](https://www.imab.dk)
+- Blog: [imab.dk/intunewincontextprep](https://www.imab.dk/intunewincontextprep/)
 - X: [@mwbengtsson](https://x.com/mwbengtsson)
 - LinkedIn: [martin-bengtsson](https://www.linkedin.com/in/martin-bengtsson/)
